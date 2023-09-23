@@ -18,6 +18,7 @@
             list
             .Where(x => list
             .GroupBy(x => x)
-            .ToDictionary(x => x.Key, x => x.Count())[x] > minCnt);
+            .ToDictionary(x => x.Key, x => x.Count())[x] > minCnt)
+            .ToHashSet();
     }
 }
