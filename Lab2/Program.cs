@@ -13,33 +13,43 @@ namespace Lab2
 
             _ = RedirectWithTimeout(inputChannel.Reader, outputChannel.Writer, 200);
 
-            await inputChannel.Writer.WriteAsync("Test1");
-
-            Console.WriteLine(await outputChannel.Reader.ReadAsync());
-
-            await inputChannel.Writer.WriteAsync("Test2");
-            Console.WriteLine(await outputChannel.Reader.ReadAsync());
+            await WriteAndPrint(inputChannel.Writer, outputChannel.Reader, "Test1");
+            await WriteAndPrint(inputChannel.Writer, outputChannel.Reader, "Test2");
 
             await Task.Delay(600);
-            await inputChannel.Writer.WriteAsync("Test3");
-            Console.WriteLine(await outputChannel.Reader.ReadAsync());
+            await WriteAndPrint(inputChannel.Writer, outputChannel.Reader, "Test3");
+        }
+
+        public static async Task WriteAndPrint(ChannelWriter<string> writer, ChannelReader<string> reader, string message)
+        {
+            await writer.WriteAsync(message);
+            Console.WriteLine(await reader.ReadAsync());
         }
 
         public static async Task RedirectWithTimeout(ChannelReader<string> input, ChannelWriter<string> output, int timeout)
         {
             while (true)
             {
-                var cts = new CancellationTokenSource(timeout);
                 try
                 {
-                    var item = await input.ReadAsync(cts.Token);
-                    await output.WriteAsync(item);
+                    var item = await ReadWithTimeout(input, new CancellationTokenSource(timeout).Token);
+                    await Write(output, item);
                 }
                 catch (OperationCanceledException)
                 {
-                    await output.WriteAsync(":timeout");
+                    await Write(output, "timeout");
                 }
             }
+        }
+
+        public static async Task<string> ReadWithTimeout(ChannelReader<string> reader, CancellationToken token)
+        {
+            return await reader.ReadAsync(token);
+        }
+
+        public static async Task Write(ChannelWriter<string> writer, string message)
+        {
+            await writer.WriteAsync(message);
         }
     }
 }
